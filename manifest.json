@@ -1,0 +1,11 @@
+{
+	"id": "latex equation references",
+	"name": "Latex Equation References",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Automatically numerates equations using labels.",
+	"author": "Georg Rasumov",
+	"authorUrl": "",
+	"fundingUrl": "",
+	"isDesktopOnly": false
+}
