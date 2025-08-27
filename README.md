@@ -18,3 +18,7 @@ An Obsidian plugin that makes Numbering LaTeX equations easier:
 
 - **Customizable prefix**  
   Configure the word shown before the number (e.g. `Equation`, `Eq.`, `Gleichung`).
+
+## Usage
+- write %\label{uniqeID} at the end of a line in an equation enviroment
+- write \ref{uniqueID} in your Text so that a Reference to this Equation is displayed

@@ -30,7 +30,7 @@ export default class ReferencesPlugin extends Plugin {
 	 */
 	async onload() {
 		await this.loadSettings();
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new RefereenceSettingTab(this.app, this));
 
 		// Register CodeMirror extension (adds Live Preview decorations + auto tag updater)
 		this.registerEditorExtension(this.referenceWidgetExtension());
@@ -83,7 +83,7 @@ class Label {
 /**
  * Settings tab UI.
  */
-class SampleSettingTab extends PluginSettingTab {
+class RefereenceSettingTab extends PluginSettingTab {
 	plugin: ReferencesPlugin;
 
 	constructor(app: App, plugin: ReferencesPlugin) {
