@@ -3,11 +3,11 @@
 An Obsidian plugin that makes Numbering LaTeX equations easier:
 
 - Automatically numbers equations (`\tag{N}`) based on `%\label{...}` comments.
-- Replaces raw in Text `\ref{...}` with a prefix and the equations numbering
+- Replaces `\ref{...}` with a prefix and the equations numbering.
 
 ---
 
-## ✨ Features
+## Features
 
 - **Automatic numbering**  
   Every equation with a `%\label{key}` comment is assigned a sequential number, and a `\tag{N}` is inserted or updated automatically.
