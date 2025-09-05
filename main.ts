@@ -1,4 +1,4 @@
-import { App, Editor, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 import {
 	Decoration, DecorationSet, EditorView,
 	ViewPlugin, ViewUpdate, WidgetType, PluginValue
@@ -34,6 +34,44 @@ export default class ReferencesPlugin extends Plugin {
 
 		// Register CodeMirror extension (adds Live Preview decorations + auto tag updater)
 		this.registerEditorExtension(this.referenceWidgetExtension());
+
+		this.registerMarkdownPostProcessor(async (el, ctx) => {
+			const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+			if (!file || !(file instanceof TFile)) return;
+
+			const content = await this.app.vault.read(file);
+
+			// Now you have the raw Markdown text for the note being rendered
+			// => you can scan it for %\label{...}
+			const labels = new Map<string, number>();
+			const labelRegex = /%\s*\\label\{(.+?)\}/g;
+			let count = 0, m: RegExpExecArray | null;
+
+			while ((m = labelRegex.exec(content))) {
+				count++;
+				labels.set(m[1], count);
+			}
+
+			// Then replace \ref{...} in the rendered HTML
+			const prefix = this.settings.prefix ?? "Equation ";
+			const refRegex = /\\ref\{([^}]+)\}/g;
+
+			el.querySelectorAll("p, li, div, span").forEach(node => {
+				node.childNodes.forEach(child => {
+					if (child.nodeType === Node.TEXT_NODE) {
+						const text = child.textContent ?? "";
+						const replaced = text.replace(refRegex, (full, key) => {
+							const num = labels.get(key);
+							return num ? `${prefix}${num}` : full;
+						});
+						if (replaced !== text) {
+							child.textContent = replaced;
+						}
+					}
+				});
+			});
+		});
+
 	}
 
 	/**
@@ -182,7 +220,7 @@ class ReferenceDisplayClass implements PluginValue {
 		let count = 0;
 
 		for (let i = 1; i <= doc.lines; i++) {
-			let line = doc.line(i).text;
+			const line = doc.line(i).text;
 			const match = line.match(labelRegex);
 			if (match) {
 				count++;
