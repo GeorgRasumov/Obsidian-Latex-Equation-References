@@ -108,15 +108,13 @@ export default class ReferencesPlugin extends Plugin {
 }
 
 /**
- * Simple class to hold label metadata.
+ * Simple type to hold label metadata.
  */
-class Label {
-	constructor(
-		public label: string,
-		public lineNumber: number,
-		public numeration: number,
-	) { }
-}
+type Label = {
+	label: string;
+	lineNumber: number;
+	numeration: number;
+};
 
 /**
  * Settings tab UI.
@@ -228,7 +226,11 @@ class ReferenceDisplayClass implements PluginValue {
 			count++;
 			const key = match[1];
 			const numeration = count;
-			labels.set(key, new Label(key, i - 1, numeration));
+			labels.set(key, {
+				label: key,
+				lineNumber: i - 1,
+				numeration
+			});
 
 			const newTag = `\\tag{${numeration}}`;
 
