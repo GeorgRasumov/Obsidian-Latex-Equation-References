@@ -39,7 +39,7 @@ export default class ReferencesPlugin extends Plugin {
 			const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
 			if (!file || !(file instanceof TFile)) return;
 
-			const content = await this.app.vault.read(file);
+			const content = await this.app.vault.cachedRead(file);
 
 			// Now you have the raw Markdown text for the note being rendered
 			// => you can scan it for %\label{...}
