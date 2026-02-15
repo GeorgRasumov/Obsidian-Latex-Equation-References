@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, debounce } from 'obsidian';
 import {
 	Decoration, DecorationSet, EditorView,
 	ViewPlugin, ViewUpdate, WidgetType, PluginValue
@@ -168,7 +168,6 @@ class RefWidget extends WidgetType {
  */
 class ReferenceDisplayClass implements PluginValue {
 	decorations: DecorationSet;
-	private debounceTimer: number | null = null;
 	private cachedLabels = new Map<string, Label>();
 
 	constructor(
@@ -196,16 +195,12 @@ class ReferenceDisplayClass implements PluginValue {
 	/**
 	 * Debounced tag updater – waits 2000ms after typing stops.
 	 */
-	private scheduleTagUpdate() {
-		if (this.debounceTimer) {
-			window.clearTimeout(this.debounceTimer);
-		}
-		this.debounceTimer = window.setTimeout(() => {
-			this.cachedLabels = this.updateTags(this.view); // cache labels here
-			this.decorations = this.buildDecorations(this.view);
-			this.view.dispatch({ effects: [] });
-		}, DEBOUNCE_TIME);
-	}
+	readonly scheduleTagUpdate = debounce(() => {
+		this.cachedLabels = this.updateTags(this.view); // cache labels here
+		this.decorations = this.buildDecorations(this.view);
+		this.view.dispatch({ effects: [] });
+	}, DEBOUNCE_TIME, true);
+
 
 	/**
 	 * Ensure every %\label{key} line has a correct \tag{N}.
