@@ -207,55 +207,64 @@ class ReferenceDisplayClass implements PluginValue {
 	 * Returns the labels map (so buildDecorations can reuse it).
 	 */
 	private updateTags(view: EditorView): Map<string, Label> {
-		const doc = view.state.doc;
+		const state = view.state;
+		const doc = state.doc;
+
 		const labels = new Map<string, Label>();
-		const changes: { from: number; to: number; insert: string }[] = [];
+		const changes: { from: number; to?: number; insert: string }[] = [];
 
 		const labelRegex = /\\label\{(.+?)\}/;
+		const tagRegex = /\\tag\{.*?\}/;
+
 		let count = 0;
 
 		for (let i = 1; i <= doc.lines; i++) {
-			const line = doc.line(i).text;
+			const lineInfo = doc.line(i);
+			const line = lineInfo.text;
+
 			const match = line.match(labelRegex);
-			if (match) {
-				count++;
-				const key = match[1];
-				const numeration = count;
-				labels.set(key, new Label(key, i - 1, numeration));
+			if (!match) continue;
 
-				const tagRegex = /\\tag\{.*?\}/;
-				const newTag = `\\tag{${numeration}}`;
+			count++;
+			const key = match[1];
+			const numeration = count;
+			labels.set(key, new Label(key, i - 1, numeration));
 
-				if (tagRegex.test(line)) {
-					if (!line.includes(newTag)) {
-						const newLine = line.replace(tagRegex, newTag);
-						changes.push({ from: doc.line(i).from, to: doc.line(i).to, insert: newLine });
-					}
-				} else {
-					// the label has to be written in a comment. If not dont add a tag
-					const comIdx = line.indexOf("%")
-					if (comIdx !== -1) {
-						const dblIdx = line.indexOf("\\\\");
-						let newLine: string;
-						if (dblIdx !== -1 && dblIdx < comIdx) { //If a new line is present before the comment, add the tag before the new line
-							newLine = line.slice(0, dblIdx) + `${newTag} ` + line.slice(dblIdx);
-						} else{
-							newLine = line.slice(0, comIdx) + `${newTag} ` + line.slice(comIdx);
-						}
+			const newTag = `\\tag{${numeration}}`;
 
-						changes.push({ from: doc.line(i).from, to: doc.line(i).to, insert: newLine }); //Apply the changes
-					}
-
+			// If there is already a tag, replace only that substring (minimal change)
+			const tagMatch = line.match(tagRegex);
+			if (tagMatch) {
+				if (tagMatch[0] !== newTag) {
+					const from = lineInfo.from + (tagMatch.index ?? 0);
+					const to = from + tagMatch[0].length;
+					changes.push({ from, to, insert: newTag });
 				}
+				continue;
 			}
+
+			// Otherwise only add tags if label is in a comment
+			const comIdx = line.indexOf("%");
+			if (comIdx === -1) continue;
+
+			const dblIdx = line.indexOf("\\\\");
+			const insertIdx =
+				dblIdx !== -1 && dblIdx < comIdx
+					? dblIdx
+					: comIdx;
+
+			const insertPos = lineInfo.from + insertIdx;
+			changes.push({ from: insertPos, insert: `${newTag} ` });
 		}
 
 		if (changes.length > 0) {
+			// Single transaction: CodeMirror will map the current selection through the changes
 			view.dispatch({ changes });
 		}
 
 		return labels;
 	}
+
 
 	/**
 	 * Build decorations for \ref{...} using cached labels.
